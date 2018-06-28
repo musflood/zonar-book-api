@@ -6,6 +6,7 @@ from sqlalchemy import (
     Integer,
     Unicode,
 )
+from sqlalchemy.orm import relationship
 
 from .meta import Base
 
@@ -13,8 +14,10 @@ from .meta import Base
 class User(Base):
     """Create a table for users."""
 
-    __tablename__ = 'entries'
+    __tablename__ = 'users'
     id = Column(Integer, primary_key=True)
+    books = relationship("Book", back_populates="user")
+
     first_name = Column(Unicode)
     last_name = Column(Unicode)
     email = Column(Unicode, nullable=False, unique=True)
