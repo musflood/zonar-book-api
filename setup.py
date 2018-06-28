@@ -9,6 +9,7 @@ with open(os.path.join(here, 'CHANGES.txt')) as f:
     CHANGES = f.read()
 
 requires = [
+    'passlib',
     'plaster_pastedeploy',
     'pyramid >= 1.9a',
     'pyramid_debugtoolbar',
@@ -23,6 +24,7 @@ requires = [
 
 tests_require = [
     'WebTest >= 1.3.1',  # py3 compat
+    'Faker',
     'pytest',
     'pytest-cov',
 ]
@@ -54,7 +56,7 @@ setup(
             'main = book_api:main',
         ],
         'console_scripts': [
-            'initialize_book_api_db = book_api.scripts.initializedb:main',
+            'initializedb = book_api.scripts.initializedb:main',
         ],
     },
 )
