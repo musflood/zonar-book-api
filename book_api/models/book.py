@@ -32,5 +32,5 @@ class Book(Base):
             'title': self.title,
             'author': self.author,
             'isbn': self.isbn,
-            'pub_date': self.pub_date.strftime('%m/%d/%Y'),
+            'pub_date': self.pub_date.strftime('%x'),
         }

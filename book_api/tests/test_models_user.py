@@ -4,17 +4,7 @@ import pytest
 from sqlalchemy.exc import IntegrityError
 
 from book_api.models.user import User
-
-
-@pytest.fixture(scope='module')
-def one_user():
-    """Create a single User object."""
-    return User(
-        first_name='Mo',
-        last_name='Person',
-        email='mo@mail.com',
-        password='password'
-    )
+from book_api.tests.conftest import FAKE, one_book
 
 
 def test_complete_user_added_to_database(db_session, one_user):
@@ -27,9 +17,9 @@ def test_complete_user_added_to_database(db_session, one_user):
 def test_incomplete_user_no_password_not_added_to_database(db_session):
     """Test that a User cannot be added without required fields."""
     user = User(
-        first_name='Mo',
-        last_name='Person',
-        email='mo@mail.com'
+        first_name=FAKE.first_name(),
+        last_name=FAKE.last_name(),
+        email=FAKE.email(),
     )
     db_session.add(user)
     with pytest.raises(IntegrityError):
@@ -39,8 +29,8 @@ def test_incomplete_user_no_password_not_added_to_database(db_session):
 def test_incomplete_user_no_email_not_added_to_database(db_session):
     """Test that a User cannot be added without required fields."""
     user = User(
-        first_name='Mo',
-        last_name='pPerson',
+        first_name=FAKE.first_name(),
+        last_name=FAKE.last_name(),
         password='password'
     )
     db_session.add(user)
@@ -53,9 +43,9 @@ def test_user_duplicate_email_not_added_to_database(db_session, one_user):
     db_session.add(one_user)
     db_session.flush()
     dup_user = User(
-        first_name='Bob',
-        last_name='Friend',
-        email='mo@mail.com',
+        first_name=FAKE.first_name(),
+        last_name=FAKE.last_name(),
+        email=one_user.email,
         password='supersecret'
     )
     db_session.add(dup_user)
@@ -72,6 +62,13 @@ def test_user_with_no_books_has_access_to_books_list(one_user):
     """Test that a User has access to a list of their books."""
     assert isinstance(one_user.books, list)
     assert len(one_user.books) == 0
+
+
+def test_user_with_books_has_access_to_books_list(one_user):
+    """Test that a User has access to a list of their books."""
+    for _ in range(5):
+        one_book(one_user)
+    assert len(one_user.books) == 5
 
 
 def test_verify_returns_true_for_correct_password(one_user):

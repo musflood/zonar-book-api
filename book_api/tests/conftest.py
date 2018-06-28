@@ -2,16 +2,21 @@
 
 import os
 
+from faker import Faker
 from pyramid import testing
 import pytest
 
+from book_api.models.book import Book
 from book_api.models.meta import Base
+from book_api.models.user import User
 
 BASE_DIR = os.path.dirname(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 )
 
 TEST_DATABASE = 'sqlite:///{}/test_book_api.sqlite'.format(BASE_DIR)
+
+FAKE = Faker()
 
 
 @pytest.fixture(scope='session')
@@ -70,3 +75,28 @@ def testapp(request):
     request.addfinalizer(tearDown)
 
     return TestApp(app)
+
+
+# Model fixtures #
+
+@pytest.fixture(scope='module')
+def one_user():
+    """Create a single User object."""
+    return User(
+        first_name=FAKE.first_name(),
+        last_name=FAKE.last_name(),
+        email=FAKE.email(),
+        password='password'
+    )
+
+
+@pytest.fixture
+def one_book(one_user):
+    """Create a single Book object."""
+    return Book(
+        user=one_user,
+        title=FAKE.sentence(nb_words=3),
+        author=FAKE.name(),
+        isbn=FAKE.isbn13(separator="-"),
+        pub_date=FAKE.date_object()
+    )
