@@ -10,6 +10,8 @@ REST API for keeping track of a user's book wish list for Zonar interview
 ## Architecture
 Written in [Python](https://www.python.org/), with [pytest](https://docs.pytest.org/en/latest/). Uses the web framework [Pyramid](https://trypyramid.com/) with a scaffold built with the Cookiecutter [pyramid-cookiecutter-alchemy](https://github.com/Pylons/pyramid-cookiecutter-alchemy). Database run through [SQLite](https://sqlite.org/index.html) using [SQLAlchemy](http://www.sqlalchemy.org/).
 
+More on design and technology choices [here](./design.md).
+
 ## Routes
 
 <table>
@@ -54,7 +56,7 @@ Written in [Python](https://www.python.org/), with [pytest](https://docs.pytest.
     title: (String),
     author: (String),
     isbn: (String),
-    pub_date: (String) in the form mm/dd/yyyy)
+    pub_date: (String in the form mm/dd/yyyy)
 }</code></pre></td>
     </tr>
     <tr>
