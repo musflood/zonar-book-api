@@ -2,8 +2,9 @@
 
 from datetime import datetime
 
-from pyramid.httpexceptions import HTTPBadRequest, HTTPForbidden
+from pyramid.httpexceptions import HTTPBadRequest, HTTPForbidden, HTTPNotFound
 from pyramid.view import view_config
+from sqlalchemy.exc import DBAPIError
 
 from book_api.models.book import Book
 from book_api.models.user import User
@@ -39,19 +40,60 @@ def book_list_create_view(request):
             title: <String>,
             author: <String>,
             isbn: <String>,
+            pub_date: <String of mm/dd/yyyy>
+        }
+    'email' and 'password' are required as authentication for the user.
+    The only required field is 'title'. Bad data will produce a 400 response.
+    """
+    data = request.GET if request.method == 'GET' else request.POST
+    user = validate_user(request.dbsession, data)
+
+    if request.method == 'GET':
+        return _list_books(request, user)
+
+    if request.method == 'POST':
+        return _create_book(request, user)
+
+
+@view_config(route_name='book-id', request_method=('GET', 'PUT', 'DELETE'), renderer='json')
+def book_detail_update_delete_view(request):
+    """Update or delete a book by ID.
+
+    PUT request for updating a book. DELETE request for removing a book.
+
+    Information should be formatted as follows:
+        {
+            email: <String>,
+            password: <String>,
+
+            title: <String>,
+            author: <String>,
+            isbn: <String>,
             pub_date: <String>
         }
     'email' and 'password' are required as authentication for the user.
     The only required field is 'title'. Bad data will produce a 400 response.
     """
+    data = request.GET if request.method == 'GET' else request.POST
+    user = validate_user(request.dbsession, data)
+
+    book_id = int(request.matchdict['id'])
+    book = request.dbsession.query(Book).filter_by(user_id=user.id, id=book_id).first()
+
+    if not book:
+        raise HTTPNotFound
+
     if request.method == 'GET':
-        return _list_books(request)
+        return book.to_json()
 
-    if request.method == 'POST':
-        return _create_book(request)
+    if request.method == 'PUT':
+        return _update_book(request, book)
+
+    if request.method == 'DELETE':
+        return _delete_book(request, book)
 
 
-def _list_books(request):
+def _list_books(request, user):
     """List all the books associated with a user.
 
     Information should be formatted as follows:
@@ -61,11 +103,10 @@ def _list_books(request):
         }
     'email' and 'password' are required as authentication for the user.
     """
-    user = validate_user(request.dbsession, request.GET)
     return [book.to_json() for book in user.books]
 
 
-def _create_book(request):
+def _create_book(request, user):
     """Add a new book to the wish list of a user.
 
     Information should be formatted as follows:
@@ -81,8 +122,6 @@ def _create_book(request):
     'email' and 'password' are required as authentication for the user.
     The only required field is 'title'. Bad data will produce a 400 response.
     """
-    user = validate_user(request.dbsession, request.POST)
-
     if 'title' not in request.POST:
         raise HTTPBadRequest
 
@@ -100,6 +139,55 @@ def _create_book(request):
         pub_date=pub_date if 'pub_date' in request.POST else None,
     )
     request.dbsession.add(book)
-    request.dbsession.flush()
+    try:
+        request.dbsession.flush()
+    except DBAPIError:
+        raise HTTPBadRequest
     request.response.status = 201
     return book.to_json()
+
+
+def _update_book(request, book):
+    """Update the given book with data from the request.
+
+    Information should be formatted as follows:
+        {
+            email: <String>,
+            password: <String>,
+
+            title: <String>,
+            author: <String>,
+            isbn: <String>,
+            pub_date: <String of mm/dd/yyyy>
+        }
+    'email' and 'password' are required as authentication for the user.
+    Bad data will produce a 400 response.
+    """
+    if 'pub_date' in request.POST:
+        try:
+            request.POST['pub_date'] = datetime.strptime(request.POST['pub_date'], '%m/%d/%Y')
+        except ValueError:
+            raise HTTPBadRequest
+
+    for prop in ['title', 'author', 'isbn', 'pub_date']:
+        if prop in request.POST:
+            setattr(book, prop, request.POST[prop])
+    request.dbsession.add(book)
+    try:
+        request.dbsession.flush()
+    except DBAPIError:
+        raise HTTPBadRequest
+    return book.to_json()
+
+
+def _delete_book(request, book):
+    """Delete the given book.
+
+    Information should be formatted as follows:
+        {
+            email: <String>,
+            password: <String>,
+        }
+    'email' and 'password' are required as authentication for the user.
+    Bad data will produce a 400 response.
+    """

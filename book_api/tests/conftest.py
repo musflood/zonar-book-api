@@ -5,7 +5,9 @@ import os
 from faker import Faker
 from pyramid import testing
 import pytest
+import transaction
 
+from book_api.models import get_tm_session
 from book_api.models.book import Book
 from book_api.models.meta import Base
 from book_api.models.user import User
@@ -82,13 +84,40 @@ def testapp_session(testapp, request):
     """Create a session to interact with the database."""
     SessionFactory = testapp.app.registry["dbsession_factory"]
     session = SessionFactory()
-    session.bind
 
     def teardown():
         session.transaction.rollback()
 
     request.addfinalizer(teardown)
     return session
+
+
+@pytest.fixture(scope='session')
+def fill_the_db(testapp):
+    """Fill the test database with dummy entries."""
+    users = []
+    books = []
+    for _ in range(5):
+        user = User(
+            first_name=FAKE.first_name(),
+            last_name=FAKE.last_name(),
+            email=FAKE.email(),
+            password='password'
+        )
+        users.append(user)
+        for _ in range(10):
+            books.append(Book(
+                user=user,
+                title=FAKE.sentence(nb_words=3),
+                author=FAKE.name(),
+                isbn=FAKE.isbn13(separator="-"),
+                pub_date=FAKE.date_object()
+            ))
+    SessionFactory = testapp.app.registry['dbsession_factory']
+    with transaction.manager:
+        dbsession = get_tm_session(SessionFactory, transaction.manager)
+        dbsession.add_all(users)
+        dbsession.add_all(books)
 
 
 # Model fixtures #

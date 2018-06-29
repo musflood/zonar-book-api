@@ -58,8 +58,17 @@ Written in [Python](https://www.python.org/), with [pytest](https://docs.pytest.
 }</code></pre></td>
     </tr>
     <tr>
-        <td rowspan="2"><code>/books/{id:\d+}</code></td>
-        <td rowspan="2">book-id</td>
+        <td rowspan="3"><code>/books/{id:\d+}</code></td>
+        <td rowspan="3">book-id</td>
+        <td>GET</td>
+        <td>get details about a book from the wish list by id</td>
+        <td><pre>
+<code>{
+    email: (Registered email),
+    password: (Registered password)
+}</code></pre></td>
+    </tr>
+    <tr>
         <td>PUT</td>
         <td>update a book's details by id</td>
         <td><pre>
