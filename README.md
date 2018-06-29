@@ -2,7 +2,7 @@
 
 **Author**: Megan Flood
 
-**Version**: 0.0.0
+**Version**: 1.0.0
 
 ## Overview
 REST API for keeping track of a user's book wish list for Zonar interview

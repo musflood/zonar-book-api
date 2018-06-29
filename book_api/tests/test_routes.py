@@ -245,7 +245,7 @@ def test_book_list_post_complete_data_returns_json_with_new_book_info(testapp, o
 
 
 def test_book_list_post_data_without_values_sets_values_to_none(testapp, one_user):
-    """Test that POST to book-list route sets first and last names to None."""
+    """Test that POST to book-list route sets missing values to None."""
     data = {
         'email': one_user.email,
         'password': 'password',
@@ -328,7 +328,7 @@ def test_book_id_get_correct_auth_has_200_response_code(testapp, testapp_session
 
 
 def test_book_id_get_correct_auth_returns_json_with_book_info(testapp, testapp_session, one_user):
-    """Test that GET to book-id route gets 200 status code for good auth."""
+    """Test that GET to book-id route return JSON with correct book data."""
     book = testapp_session.query(User).get(one_user.id).books[0]
 
     data = {
@@ -410,7 +410,7 @@ def test_book_id_put_correct_auth_does_not_add_book_to_database(testapp, testapp
 
 
 def test_book_id_put_correct_auth_updates_book_in_database(testapp, testapp_session, one_user):
-    """Test that PUT to book-id route gets 200 status code for good auth."""
+    """Test that PUT to book-id route updates the correct book in the database."""
     book = testapp_session.query(User).get(one_user.id).books[0]
 
     data = {
@@ -425,7 +425,7 @@ def test_book_id_put_correct_auth_updates_book_in_database(testapp, testapp_sess
 
 
 def test_book_id_put_correct_auth_returns_json_with_updated_book_info(testapp, testapp_session, one_user):
-    """Test that PUT to book-id route gets 200 status code for good auth."""
+    """Test that PUT to book-id route returns JSON with updated book data."""
     book = testapp_session.query(User).get(one_user.id).books[0]
 
     data = {
@@ -442,3 +442,75 @@ def test_book_id_put_correct_auth_returns_json_with_updated_book_info(testapp, t
             assert res.json[prop] == data[prop]
         else:
             assert res.json[prop] == getattr(book, prop)
+
+
+def test_book_id_delete_missing_auth_gets_400_status_code(testapp, testapp_session, one_user):
+    """Test that DELETE to book-id route gets 400 status code for missing auth."""
+    res = testapp.delete('/books/1', status=400)
+    assert res.status_code == 400
+
+
+def test_book_id_delete_incorrect_auth_gets_403_status_code(testapp, one_user):
+    """Test that DELETE to book-id route gets 403 status code for bad auth."""
+    data = {
+        'email': one_user.email,
+        'password': 'notthepassword'
+    }
+    res = testapp.delete('/books/1', data, status=403)
+    assert res.status_code == 403
+
+
+def test_book_id_delete_correct_auth_not_users_book_gets_404_status_code(testapp, testapp_session, one_user):
+    """Test that DELETE to book-id route gets 404 status code for book that does not beling to user."""
+    book = testapp_session.query(Book).filter(Book.user_id != one_user.id).first()
+
+    data = {
+        'email': one_user.email,
+        'password': 'password'
+    }
+    res = testapp.delete('/books/{}'.format(book.id), data, status=404)
+    assert res.status_code == 404
+
+
+def test_book_id_delete_correct_auth_has_204_response_code(testapp, testapp_session, one_user):
+    """Test that DELETE to book-id route gets 204 status code for good auth."""
+    book = testapp_session.query(User).get(one_user.id).books[0]
+
+    data = {
+        'email': one_user.email,
+        'password': 'password'
+    }
+    res = testapp.delete('/books/{}'.format(book.id), data)
+    assert res.status_code == 204
+
+
+def test_book_id_delete_correct_auth_removes_book_from_database(testapp, testapp_session, one_user):
+    """Test that DELETE to book-id route does not create a new Book."""
+    book = testapp_session.query(User).get(one_user.id).books[0]
+
+    num_books = len(testapp_session.query(Book).all())
+    data = {
+        'email': one_user.email,
+        'password': 'password'
+    }
+    testapp.delete('/books/{}'.format(book.id), data)
+    assert len(testapp_session.query(Book).all()) == num_books - 1
+
+
+def test_book_id_delete_correct_auth_removes_book_by_id(testapp, testapp_session, one_user):
+    """Test that DELETE to book-id route removes the correct Book by id."""
+    book = testapp_session.query(User).get(one_user.id).books[0]
+    book_id = book.id
+
+    data = {
+        'email': one_user.email,
+        'password': 'password'
+    }
+
+    res = testapp.get('/books/{}'.format(book_id), data)
+    assert res.status_code == 200
+
+    testapp.delete('/books/{}'.format(book_id), data)
+
+    res = testapp.get('/books/{}'.format(book_id), data, status=404)
+    assert res.status_code == 404

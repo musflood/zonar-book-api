@@ -191,3 +191,6 @@ def _delete_book(request, book):
     'email' and 'password' are required as authentication for the user.
     Bad data will produce a 400 response.
     """
+    request.dbsession.delete(book)
+    request.response.status = 204
+    request.response.content_type = None

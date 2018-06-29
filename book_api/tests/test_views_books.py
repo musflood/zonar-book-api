@@ -6,7 +6,7 @@ from pyramid.httpexceptions import HTTPBadRequest, HTTPForbidden
 from book_api.models.book import Book
 from book_api.tests.conftest import FAKE
 from book_api.views.books import (
-    _create_book, _list_books, _update_book, validate_user)
+    _create_book, _delete_book, _list_books, _update_book, validate_user)
 
 
 def test_validate_user_raises_error_for_incomplete_data(dummy_request):
@@ -291,3 +291,33 @@ def test_update_returns_dict_with_updated_book_data(dummy_request, db_session, o
     assert isinstance(res, dict)
     assert all(prop in res for prop in
                ['id', 'title', 'author', 'isbn', 'pub_date'])
+
+
+def test_delete_returns_nothing(dummy_request, db_session, one_user):
+    """Test that delete returns None."""
+    db_session.add(one_user)
+    book = db_session.query(Book).first()
+
+    data = {
+        'email': one_user.email,
+        'password': 'password',
+    }
+    dummy_request.POST = data
+    res = _delete_book(dummy_request, book)
+    assert res is None
+
+
+def test_delete_removes_book_from_database(dummy_request, db_session, one_user):
+    """Test that delete removes the given book from the database."""
+    db_session.add(one_user)
+    book = db_session.query(Book).first()
+    book_id = book.id
+
+    data = {
+        'email': one_user.email,
+        'password': 'password',
+    }
+    dummy_request.POST = data
+    _delete_book(dummy_request, book)
+    db_session.commit()
+    assert db_session.query(Book).get(book_id) is None
