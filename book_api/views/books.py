@@ -45,7 +45,7 @@ def book_list_create_view(request):
     The only required field is 'title'. Bad data will produce a 400 response.
     """
     if request.method == 'POST':
-        _create_book(request)
+        return _create_book(request)
 
 
 def _create_book(request):

@@ -5,7 +5,54 @@ from pyramid.httpexceptions import HTTPBadRequest, HTTPForbidden
 
 from book_api.models.book import Book
 from book_api.tests.conftest import FAKE
-from book_api.views.books import _create_book
+from book_api.views.books import _create_book, validate_user
+
+
+def test_validate_user_raises_error_for_incomplete_data(dummy_request):
+    """Test that validate_user raises HTTPBadRequest for missing password."""
+    data = {
+        'email': FAKE.email()
+    }
+    dummy_request.POST = data
+    with pytest.raises(HTTPBadRequest):
+        validate_user(dummy_request)
+
+
+def test_validate_user_raises_error_for_email_not_in_database(dummy_request):
+    """Test that validate_user raises HTTPForbidden for bad email."""
+    data = {
+        'email': FAKE.email(),
+        'password': 'password'
+    }
+    dummy_request.POST = data
+    with pytest.raises(HTTPForbidden):
+        validate_user(dummy_request)
+
+
+def test_validate_user_raises_error_for_incorrect_password(dummy_request, db_session, one_user):
+    """Test that validate_user raises HTTPForbidden for bad email."""
+    db_session.add(one_user)
+
+    data = {
+        'email': one_user.email,
+        'password': 'notthepassword'
+    }
+    dummy_request.POST = data
+    with pytest.raises(HTTPForbidden):
+        validate_user(dummy_request)
+
+
+def test_validate_user_returns_user_matching_email(dummy_request, db_session, one_user):
+    """Test that validate_user raises HTTPForbidden for bad email."""
+    db_session.add(one_user)
+
+    data = {
+        'email': one_user.email,
+        'password': 'password'
+    }
+    dummy_request.POST = data
+    auth_user = validate_user(dummy_request)
+    assert auth_user is one_user
 
 
 def test_create_raises_error_for_incomplete_post_data(dummy_request, db_session, one_user):
@@ -113,6 +160,24 @@ def test_create_creates_new_book_using_post_data(dummy_request, db_session, one_
     for prop in ['title', 'author', 'isbn']:
         assert getattr(new_book, prop) == data[prop]
     assert new_book.pub_date.strftime('%m/%d/%Y') == data['pub_date']
+
+
+def test_create_sets_email_user_as_owner_of_new_book(dummy_request, db_session, one_user):
+    """Test that create uses email from POST data to set Book owner."""
+    db_session.add(one_user)
+
+    data = {
+        'email': one_user.email,
+        'password': 'password',
+        'title': FAKE.sentence(nb_words=3),
+        'author': FAKE.name(),
+        'isbn': FAKE.isbn13(separator="-"),
+        'pub_date': FAKE.date(pattern='%m/%d/%Y')
+    }
+    dummy_request.POST = data
+    res = _create_book(dummy_request)
+    new_book = db_session.query(Book).get(res['id'])
+    assert one_user is new_book.user
 
 
 def test_create_creates_new_book_with_none_values(dummy_request, db_session, one_user):
