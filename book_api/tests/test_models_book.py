@@ -59,4 +59,4 @@ def test_to_json_has_property_values_from_object(one_book):
     json = one_book.to_json()
     for prop in ['id', 'title', 'author', 'isbn']:
         assert json[prop] == getattr(one_book, prop)
-    assert json['pub_date'] == one_book.pub_date.strftime('%x')
+    assert json['pub_date'] == one_book.pub_date.strftime('%m/%d/%Y')

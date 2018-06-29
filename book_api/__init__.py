@@ -4,7 +4,6 @@ from pyramid.config import Configurator
 def main(global_config, **settings):
     """ This function returns a Pyramid WSGI application.
     """
-    print(settings)
     config = Configurator(settings=settings)
     config.include('.models')
     config.include('.routes')
