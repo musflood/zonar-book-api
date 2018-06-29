@@ -76,3 +76,15 @@ def test_signup_creates_new_user_using_post_data(dummy_request, db_session):
     for prop in ['first_name', 'last_name', 'email']:
         assert getattr(new_user, prop) == data[prop]
     assert new_user.verify(data['password'])
+
+
+def test_signup_creates_new_user_with_none_names(dummy_request, db_session):
+    """Test that signup sets first and last name to None when not given."""
+    data = {
+        'email': FAKE.email(),
+        'password': FAKE.password()
+    }
+    dummy_request.POST = data
+    res = signup_view(dummy_request)
+    assert res['first_name'] is None
+    assert res['last_name'] is None

@@ -25,7 +25,12 @@ def signup_view(request):
     """
     if not all([field in request.POST for field in ['email', 'password']]):
         raise HTTPBadRequest
-    user = User(**request.POST)
+    user = User(
+        first_name=request.POST['first_name'] if 'first_name' in request.POST else None,
+        last_name=request.POST['last_name'] if 'last_name' in request.POST else None,
+        email=request.POST['email'],
+        password=request.POST['password']
+    )
     request.dbsession.add(user)
     try:
         request.dbsession.flush()

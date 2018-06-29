@@ -64,3 +64,14 @@ def test_signup_post_complete_data_returns_json_with_new_user_info(testapp):
     res = testapp.post('/signup', data)
     for prop in ['first_name', 'last_name', 'email']:
         assert res.json[prop] == data[prop]
+
+
+def test_signup_post_data_without_names_sets_names_to_none(testapp):
+    """Test that POST to signup route sets first and last names to None."""
+    data = {
+        'email': FAKE.email(),
+        'password': FAKE.password()
+    }
+    res = testapp.post('/signup', data)
+    assert res.json['first_name'] is None
+    assert res.json['last_name'] is None

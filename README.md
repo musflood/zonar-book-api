@@ -11,11 +11,66 @@ REST API for keeping track of a user's book wish list for Zonar interview
 Written in [Python](https://www.python.org/), with [pytest](https://docs.pytest.org/en/latest/). Uses the web framework [Pyramid](https://trypyramid.com/) with a scaffold built with the Cookiecutter [pyramid-cookiecutter-alchemy](https://github.com/Pylons/pyramid-cookiecutter-alchemy). Database run through [SQLite](https://sqlite.org/index.html) using [SQLAlchemy](http://www.sqlalchemy.org/).
 
 ## Routes
-| Route | Name | Description |
-|:--|--|:--|
-| `/signup` | signup | POST: create a new user |
-| `/books` | book-list | GET: list all the books on the wish list<br/>POST: add a new book to the wish list |
-| `/books/{id:\d+}` | book-id | PUT: update a book's details by id<br/>DELETE: remove a book from the wish list by id |
+
+<table>
+    <tr>
+        <th>Route</th>
+        <th>Name</th>
+        <th>Method</th>
+        <th>Description</th>
+        <th>Data Format</th>
+    </tr>
+    <tr>
+        <td><code>/signup</code></td>
+        <td>signup</td>
+        <td>POST</td>
+        <td>create a new user</td>
+        <td><pre>
+<code>{
+    first_name: String,
+    last_name: String,
+    email: String,
+    password: String
+}</code></pre></td>
+    </tr>
+    <tr>
+        <td rowspan="2"><code>/books</code></td>
+        <td rowspan="2">book-list</td>
+        <td>GET</td>
+        <td>list all the books on the wish list</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>POST</td>
+        <td>add a new book to the wish list</td>
+        <td><pre>
+<code>{
+    title: String,
+    author: String,
+    isbn: String,
+    pub_date: String
+}</code></pre></td>
+    </tr>
+    <tr>
+        <td rowspan="2"><code>/books/{id:\d+}</code></td>
+        <td rowspan="2">book-id</td>
+        <td>PUT</td>
+        <td>update a book's details by id</td>
+        <td><pre>
+<code>{
+    title: String,
+    author: String,
+    isbn: String,
+    pub_date: String
+}</code></pre></td>
+    </tr>
+    <tr>
+        <td>DELETE</td>
+        <td>remove a book from the wish list by id</td>
+        <td></td>
+    </tr>
+
+</table>
 
 ## Getting Started
 
