@@ -56,7 +56,7 @@ More on design and technology choices [here](./design.md).
     title: (String),
     author: (String),
     isbn: (String),
-    pub_date: (String) in the form mm/dd/yyyy)
+    pub_date: (String in the form mm/dd/yyyy)
 }</code></pre></td>
     </tr>
     <tr>
