@@ -59,7 +59,7 @@ def dummy_request(db_session):
 
 @pytest.fixture(scope="session")
 def testapp(request):
-    """Functional test for app."""
+    """Create a test wsgi app for route tests."""
     from webtest import TestApp
     from book_api import main
 
@@ -77,7 +77,22 @@ def testapp(request):
     return TestApp(app)
 
 
+@pytest.fixture
+def testapp_session(testapp, request):
+    """Create a session to interact with the database."""
+    SessionFactory = testapp.app.registry["dbsession_factory"]
+    session = SessionFactory()
+    session.bind
+
+    def teardown():
+        session.transaction.rollback()
+
+    request.addfinalizer(teardown)
+    return session
+
+
 # Model fixtures #
+
 
 @pytest.fixture(scope='module')
 def one_user():
