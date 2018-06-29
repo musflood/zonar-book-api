@@ -9,17 +9,17 @@ from book_api.models.book import Book
 from book_api.models.user import User
 
 
-def validate_user(request):
+def validate_user(dbsession, data):
     """Validate that the request has correct email and password for an User.
 
     Returns the validated User object.
     """
-    if not all([field in request.POST for field in ['email', 'password']]):
+    if not all([field in data for field in ['email', 'password']]):
         raise HTTPBadRequest
 
-    user = request.dbsession.query(User).filter_by(email=request.POST['email']).first()
+    user = dbsession.query(User).filter_by(email=data['email']).first()
 
-    if not user or not user.verify(request.POST['password']):
+    if not user or not user.verify(data['password']):
         raise HTTPForbidden('The given email and password do not match.')
 
     return user
@@ -44,8 +44,25 @@ def book_list_create_view(request):
     'email' and 'password' are required as authentication for the user.
     The only required field is 'title'. Bad data will produce a 400 response.
     """
+    if request.method == 'GET':
+        return _list_books(request)
+
     if request.method == 'POST':
         return _create_book(request)
+
+
+def _list_books(request):
+    """List all the books associated with a user.
+
+    Information should be formatted as follows:
+        {
+            email: <String>,
+            password: <String>,
+        }
+    'email' and 'password' are required as authentication for the user.
+    """
+    user = validate_user(request.dbsession, request.GET)
+    return [book.to_json() for book in user.books]
 
 
 def _create_book(request):
@@ -64,7 +81,7 @@ def _create_book(request):
     'email' and 'password' are required as authentication for the user.
     The only required field is 'title'. Bad data will produce a 400 response.
     """
-    user = validate_user(request)
+    user = validate_user(request.dbsession, request.POST)
 
     if 'title' not in request.POST:
         raise HTTPBadRequest

@@ -86,6 +86,45 @@ def test_book_list_other_methods_gets_404_status_code(testapp):
         assert res.status_code == 404
 
 
+def test_book_list_get_missing_auth_gets_400_status_code(testapp, testapp_session, one_user):
+    """Test that GET to book-list route gets 400 status code for missing auth."""
+    testapp_session.add(one_user)
+    testapp_session.commit()
+
+    res = testapp.get('/books', status=400)
+    assert res.status_code == 400
+
+
+def test_book_list_get_incorrect_auth_gets_403_status_code(testapp, one_user):
+    """Test that GET to book-list route gets 403 status code for bad auth."""
+    data = {
+        'email': one_user.email,
+        'password': 'notthepassword',
+    }
+    res = testapp.get('/books', data, status=403)
+    assert res.status_code == 403
+
+
+def test_book_list_get_correct_auth_has_200_response_code(testapp, one_user):
+    """Test that GET to book-list route gets 200 status code for good auth."""
+    data = {
+        'email': one_user.email,
+        'password': 'password',
+    }
+    res = testapp.get('/books', data)
+    assert res.status_code == 200
+
+
+def test_book_list_get_correct_auth_empty_for_user_with_no_books(testapp, one_user):
+    """Test that GET to book-list route returns empty list for user without books."""
+    data = {
+        'email': one_user.email,
+        'password': 'password',
+    }
+    res = testapp.get('/books', data)
+    assert res.json == []
+
+
 def test_book_list_post_no_data_gets_400_status_code(testapp):
     """Test that POST to book-list route gets 400 status code with no data."""
     res = testapp.post('/books', status=400)
@@ -104,11 +143,8 @@ def test_book_list_post_missing_auth_gets_400_status_code(testapp):
     assert res.status_code == 400
 
 
-def test_book_list_post_incorrect_auth_gets_403_status_code(testapp, testapp_session, one_user):
+def test_book_list_post_incorrect_auth_gets_403_status_code(testapp, one_user):
     """Test that POST to book-list route gets 403 status code for bad auth."""
-    testapp_session.add(one_user)
-    testapp_session.commit()
-
     data = {
         'email': one_user.email,
         'password': 'notthepassword',
@@ -205,3 +241,26 @@ def test_book_list_post_data_without_names_sets_names_to_none(testapp, one_user)
     assert res.json['author'] is None
     assert res.json['isbn'] is None
     assert res.json['pub_date'] is None
+
+
+def test_book_list_get_correct_auth_all_books_for_user(testapp, testapp_session, one_user):
+    """Test that GET to book-list route lists all books for the users."""
+    data = {
+        'email': one_user.email,
+        'password': 'password',
+    }
+    res = testapp.get('/books', data)
+    user_books = testapp_session.query(User).get(one_user.id).books
+    assert len(res.json) == len(user_books)
+
+
+def test_book_list_get_correct_auth_all_book_details(testapp, one_user):
+    """Test that GET to book-list route has details for every book."""
+    data = {
+        'email': one_user.email,
+        'password': 'password',
+    }
+    res = testapp.get('/books', data)
+    for book in res.json:
+        assert all(prop in book for prop in
+                   ['id', 'title', 'author', 'isbn', 'pub_date'])
